@@ -1,0 +1,147 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  employee
+  manager
+}
+
+enum WorkStatus {
+  at_work
+  at_home
+  on_leave
+}
+
+enum AttendanceStatus {
+  present
+  late
+  absent
+}
+
+enum TaskPriority {
+  low
+  moderate
+  urgent
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  submitted
+  completed
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+}
+
+enum LeaveType {
+  vacation
+  sick
+  emergency
+  maternity_paternity
+}
+
+model Employee {
+  id              String       @id // e.g. "SB-8821" or "24-2545-483"
+  firstName       String
+  lastName        String
+  username        String       @unique
+  email           String       @unique
+  password        String
+  contactNumber   String
+  department      String       // Engineering, Operations, Design, Marketing
+  position        String
+  role            UserRole     @default(employee)
+  workStatus      WorkStatus   @default(at_work)
+  avatarUrl       String?
+  dateOfBirth     String       // YYYY-MM-DD
+  gender          String
+  bloodType       String
+  nextOfKin       String
+  hireDate        String?
+  isActivated     Boolean      @default(true)
+  pendingChanges  String?      // JSON string for profile updates awaiting manager confirmation
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relationships
+  attendance      AttendanceRecord[]
+  assignedTasks   TaskItem[]          @relation("AssignedTasks")
+  leaveRequests   LeaveRequest[]
+  announcements   AnnouncementItem[]  @relation("PostedAnnouncements")
+}
+
+model AttendanceRecord {
+  id            String           @id @default(uuid())
+  employeeId    String
+  date          String           // "YYYY-MM-DD"
+  day           String           // "Monday"
+  clockIn       String?          // "08:52 AM"
+  clockOut      String?          // "05:30 PM"
+  durationHours Float            @default(0)
+  status        AttendanceStatus
+  createdAt     DateTime         @default(now())
+
+  employee      Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model TaskItem {
+  id              String       @id @default(uuid())
+  title           String
+  description     String
+  department      String
+  assignedToId    String
+  assignedToName  String
+  dueDate         String
+  priority        TaskPriority @default(moderate)
+  status          TaskStatus   @default(pending)
+  completedOnTime Boolean?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  assignedTo      Employee     @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: Cascade)
+}
+
+model LeaveRequest {
+  id            String      @id @default(uuid())
+  employeeId    String
+  employeeName  String
+  department    String
+  leaveType     LeaveType
+  description   String
+  startDate     String
+  endDate       String
+  daysCount     Int
+  proofFileName String?
+  reason        String
+  status        LeaveStatus @default(pending)
+  submittedAt   String
+  reviewedBy    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model AnnouncementItem {
+  id               String       @id @default(uuid())
+  title            String
+  message          String
+  date             String
+  priority         TaskPriority @default(moderate)
+  targetDepartment String       // "All" or specific department
+  postedById       String
+  postedByName     String
+  createdAt        DateTime     @default(now())
+
+  postedBy         Employee     @relation("PostedAnnouncements", fields: [postedById], references: [id], onDelete: Cascade)
+}

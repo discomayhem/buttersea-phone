@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { ChevronDown, Calendar } from "lucide-react";
+import DashboardView from "@/components/dashboard/DashboardView";
 
 export default function LoginPage() {
-  const [view, setView] = useState<"login" | "signup" | "confirmation">("login");
+  const [view, setView] = useState<"login" | "signup" | "confirmation" | "dashboard">("login");
   const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
 
@@ -19,10 +20,26 @@ export default function LoginPage() {
   const [signupPassword, setSignupPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setView("dashboard");
+  };
+
+  if (view === "dashboard") {
+    return (
+      <DashboardView
+        onLogout={() => setView("login")}
+        userName="Mr. Employer"
+        userRole="Department Manager"
+      />
+    );
+  }
+
   return (
-    <main className="ems-auth-container">
-      {/* LEFT PANEL */}
-      <section className="ems-left-panel">
+    <div className="auth-page-wrapper">
+      <main className="ems-auth-container">
+        {/* LEFT PANEL */}
+        <section className="ems-left-panel">
         {/* Brand Logo */}
         <div className="seabutter-brand">
           <svg
@@ -135,7 +152,7 @@ export default function LoginPage() {
             </div>
 
             {/* Login Form */}
-            <form onSubmit={(e) => e.preventDefault()}>
+            <form onSubmit={handleLogin}>
               <div className="ems-form-group">
                 <label htmlFor="employeeId" className="ems-label">
                   Employee ID
@@ -438,5 +455,6 @@ export default function LoginPage() {
         )}
       </section>
     </main>
+    </div>
   );
 }
